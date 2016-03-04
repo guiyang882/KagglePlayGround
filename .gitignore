@@ -1,2 +1,5 @@
 *.csv
 *~
+*.pkl
+data/*.pkl
+data/*.csv
