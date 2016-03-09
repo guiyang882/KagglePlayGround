@@ -4,7 +4,7 @@
 from __future__ import absolute_import
 from __future__ import division
 
-import os, csv
+import os, csv, sys
 import pickle
 import numpy
 import tensorflow as tf
@@ -14,7 +14,7 @@ SEED = 66478  # Set to None for random seed.
 BATCH_SIZE = 64 
 EVAL_BATCH_SIZE = BATCH_SIZE
 EVAL_FREQUENCY = 100  # Number of steps between evaluations.
-N_OUTPUT_LAYER = 40
+N_OUTPUT_LAYER = 10
 IMAGE_WIDTH, IMAGE_HEIGHT = 28,28
 
 def error_rate(predictions, labels):
@@ -180,11 +180,11 @@ def main():
             feed_dict = {train_data_node: batch_data, train_labels_node: batch_labels}
           # Run the graph and fetch some of the nodes.
             _, l, lr, predictions = sess.run([optimizer, loss, learning_rate, train_prediction], feed_dict=feed_dict)
-            #if start % EVAL_FREQUENCY == 0:
-                #print "->" * 20
-                #print('Minibatch loss: %.3f, learning rate: %.6f' % (l, lr))
-                #print('Minibatch error: %.1f%%' % error_rate(predictions, batch_labels))
-                #sys.stdout.flush()
+            if start % EVAL_FREQUENCY == 0:
+                print "->" * 20
+                print('Minibatch loss: %.3f, learning rate: %.6f' % (l, lr))
+                print('Minibatch error: %.1f%%' % error_rate(predictions, batch_labels))
+                sys.stdout.flush()
 
     # Finally print the result!
     preLabels = eval_in_batches(test_data, sess)

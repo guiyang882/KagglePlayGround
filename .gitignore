@@ -3,3 +3,6 @@
 *.pkl
 data/*.pkl
 data/*.csv
+DigitRecognizer/data/test/ 
+DigitRecognizer/data/train/
+DigitRecognizer/data/error/

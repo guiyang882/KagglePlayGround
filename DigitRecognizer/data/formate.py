@@ -4,6 +4,7 @@
 import csv
 import numpy as np
 import os, pickle
+import cv2 as cv
 
 def convertData(filename, flag):
     if os.path.exists(filename) == False:
@@ -20,11 +21,17 @@ def convertData(filename, flag):
             if index == 1:
                 continue
             if flag == "train":
-                res = map(float,line[:28*28+1])
+                res = map(np.uint8,line[:28*28+1])
                 labels.append(res[0])
-                data.append(np.array(res[1:]).reshape([28,28,1]))
+                info_arr = np.array(res[1:]).reshape([28,28,1])
+                info_img = cv.adaptiveThreshold(info_arr, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 11, 2)
+                data.append(255 - info_img.astype(np.float).reshape([28,28,1]))
+                #cv.imwrite("train/S%05d_%d.jpg" % (index-1,res[0]),info_arr)
             if flag == "test":
-                data.append( np.array( map( float, line[:28*28] ) ).reshape([28,28,1]) )
+                info_arr = np.array( map( np.uint8, line[:28*28] ) ).reshape([28,28,1])
+                info_img = cv.adaptiveThreshold(info_arr, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 11, 2)
+                data.append(255 - info_img.astype(np.float).reshape([28,28,1]))
+                #cv.imwrite("test/S%05d.jpg" % (index-1),info_arr)
         if flag == "train":
             labels_handle = open("labels.pkl","wb")
             pickle.dump(np.array(labels),labels_handle)
