@@ -6,3 +6,5 @@ data/*.csv
 DigitRecognizer/data/test/ 
 DigitRecognizer/data/train/
 DigitRecognizer/data/error/
+FacialDetection/data/
+FacialDetection/result/
