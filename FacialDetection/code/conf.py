@@ -3,6 +3,7 @@
 
 SRC_TESTFILE = "../data/test.csv"
 SRC_TRAINFILE = "../data/training.csv"
+FLOOKUP = "../data/IdLookupTable.csv"
 DIR_TESTIMG = "../data/test_pic/"
 DIR_TRAINIMG = "../data/train_pic/"
 
