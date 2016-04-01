@@ -8,7 +8,7 @@ IMAGE_WIDTH, IMAGE_HEIGHT = 96, 96
 N_CLASS = 30
 BATCH_SIZE = 64
 TRAINING_ITERS = 1000000
-DISPLAY_STEP = 50
+DISPLAY_STEP = 20
 
 def create_CNN(Data, Weights, Biases, Dropout):
     
@@ -53,25 +53,25 @@ Weight_Dicts = {
     'wc1' : tf.Variable(tf.random_normal([2, 2, 1, 32])),
     'wc2' : tf.Variable(tf.random_normal([2, 2, 32, 64])),
     'wc3' : tf.Variable(tf.random_normal([2, 2, 64, 128])),
-    'wh1' : tf.Variable(tf.random_normal([(IMAGE_WIDTH // 8) * (IMAGE_HEIGHT // 8) * 128, 1024])),
-    'wh2' : tf.Variable(tf.random_normal([1024, 1024])),
-    'out' : tf.Variable(tf.random_normal([1024, N_CLASS]))
+    'wh1' : tf.Variable(tf.random_normal([(IMAGE_WIDTH // 8) * (IMAGE_HEIGHT // 8) * 128, 1000])),
+    'wh2' : tf.Variable(tf.random_normal([1000, 1000])),
+    'out' : tf.Variable(tf.random_normal([1000, N_CLASS]))
 }
 
 Biases_Dict = {
     'bc1' : tf.Variable(tf.random_normal([32])),
     'bc2' : tf.Variable(tf.random_normal([64])),
     'bc3' : tf.Variable(tf.random_normal([128])),
-    'bh1' : tf.Variable(tf.random_normal([1024])),
-    'bh2' : tf.Variable(tf.random_normal([1024])),
+    'bh1' : tf.Variable(tf.random_normal([1000])),
+    'bh2' : tf.Variable(tf.random_normal([1000])),
     'out' : tf.Variable(tf.random_normal([N_CLASS]))
 }
 
 Dropout_Dict = {
-    'dc1' : 1.0,
-    'dc2' : 1.0,
-    'dc3' : 1.0,
-    'dh1' : 1.0,
+    'dc1' : 0.1,
+    'dc2' : 0.2,
+    'dc3' : 0.3,
+    'dh1' : 0.5,
     'dh2' : 1.0
 }
 
@@ -82,7 +82,7 @@ def main():
     train_model = create_CNN(imgs, Weight_Dicts, Biases_Dict, Dropout_Dict)
     # Define loss and optimizer 
     cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(train_model, keys))
-    optimizer = tf.train.AdamOptimizer(0.1).minimize(cost)
+    optimizer = tf.train.AdamOptimizer(0.01).minimize(cost)
 
     # Evaluate the train model
     correct_model = tf.equal(tf.argmax(train_model, 1), tf.argmax(keys, 1))

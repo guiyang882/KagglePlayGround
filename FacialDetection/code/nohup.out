@@ -1,0 +1,156 @@
+
+To use this script, first run this to fit your first model:
+
+  python kfkd.py fit
+
+Then train a bunch of specialists that intiliaze their weights from
+your first model:
+
+  python kfkd.py fit_specialists net.pickle
+
+Plot their error curves:
+
+  python kfkd.py plot_learning_curves net-specialists.pickle
+
+And finally make predictions to submit to Kaggle:
+
+  python kfkd.py predict net-specialists.pickle
+
+/tmp/kfkd-tutorial/src/lasagne/lasagne/init.py:86: UserWarning: The uniform initializer no longer uses Glorot et al.'s approach to determine the bounds, but defaults to the range (-0.01, 0.01) instead. Please use the new GlorotUniform initializer to get the old behavior. GlorotUniform is now the default for all layers.
+  warnings.warn("The uniform initializer no longer uses Glorot et al.'s "
+left_eye_center_x            7039
+left_eye_center_y            7039
+right_eye_center_x           7036
+right_eye_center_y           7036
+left_eye_inner_corner_x      2271
+left_eye_inner_corner_y      2271
+left_eye_outer_corner_x      2267
+left_eye_outer_corner_y      2267
+right_eye_inner_corner_x     2268
+right_eye_inner_corner_y     2268
+right_eye_outer_corner_x     2268
+right_eye_outer_corner_y     2268
+left_eyebrow_inner_end_x     2270
+left_eyebrow_inner_end_y     2270
+left_eyebrow_outer_end_x     2225
+left_eyebrow_outer_end_y     2225
+right_eyebrow_inner_end_x    2270
+right_eyebrow_inner_end_y    2270
+right_eyebrow_outer_end_x    2236
+right_eyebrow_outer_end_y    2236
+nose_tip_x                   7049
+nose_tip_y                   7049
+mouth_left_corner_x          2269
+mouth_left_corner_y          2269
+mouth_right_corner_x         2270
+mouth_right_corner_y         2270
+mouth_center_top_lip_x       2275
+mouth_center_top_lip_y       2275
+mouth_center_bottom_lip_x    7016
+mouth_center_bottom_lip_y    7016
+Image                        7049
+dtype: int64
+  input             	(None, 1, 96, 96)   	produces    9216 outputs
+  conv1             	(None, 32, 94, 94)  	produces  282752 outputs
+  pool1             	(None, 32, 47, 47)  	produces   70688 outputs
+  dropout1          	(None, 32, 47, 47)  	produces   70688 outputs
+  conv2             	(None, 64, 46, 46)  	produces  135424 outputs
+  pool2             	(None, 64, 23, 23)  	produces   33856 outputs
+  dropout2          	(None, 64, 23, 23)  	produces   33856 outputs
+  conv3             	(None, 128, 22, 22) 	produces   61952 outputs
+  pool3             	(None, 128, 11, 11) 	produces   15488 outputs
+  dropout3          	(None, 128, 11, 11) 	produces   15488 outputs
+  hidden4           	(None, 1000)        	produces    1000 outputs
+  dropout4          	(None, 1000)        	produces    1000 outputs
+  hidden5           	(None, 1000)        	produces    1000 outputs
+  output            	(None, 30)          	produces      30 outputs
+  epoch    train loss    valid loss    train/val  dur
+-------  ------------  ------------  -----------  -------
+      1       [94m0.06252[0m       [32m0.03651[0m      1.71242  281.43s
+      2       [94m0.01336[0m       [32m0.02314[0m      0.57736  280.98s
+      3       [94m0.00929[0m       [32m0.01766[0m      0.52608  281.27s
+      4       [94m0.00779[0m       [32m0.01485[0m      0.52483  281.59s
+      5       [94m0.00723[0m       [32m0.01306[0m      0.55361  284.86s
+      6       [94m0.00680[0m       [32m0.01207[0m      0.56318  283.80s
+      7       [94m0.00657[0m       [32m0.01124[0m      0.58434  284.83s
+      8       [94m0.00639[0m       [32m0.01121[0m      0.57029  284.41s
+      9       [94m0.00623[0m       [32m0.01061[0m      0.58695  284.72s
+     10       [94m0.00617[0m       0.01072      0.57566  285.11s
+     11       [94m0.00606[0m       [32m0.01022[0m      0.59292  283.82s
+     12       [94m0.00596[0m       0.01107      0.53840  284.60s
+     13       [94m0.00585[0m       0.01037      0.56460  284.67s
+     14       [94m0.00580[0m       [32m0.00992[0m      0.58480  284.38s
+     15       [94m0.00573[0m       0.01010      0.56788  284.32s
+     16       [94m0.00567[0m       [32m0.00964[0m      0.58776  283.97s
+     17       [94m0.00559[0m       [32m0.00946[0m      0.59112  284.41s
+     18       [94m0.00551[0m       [32m0.00921[0m      0.59825  283.93s
+     19       0.00554       0.00963      0.57510  284.03s
+     20       [94m0.00551[0m       [32m0.00918[0m      0.59957  284.78s
+     21       [94m0.00542[0m       [32m0.00906[0m      0.59804  283.64s
+     22       [94m0.00532[0m       [32m0.00903[0m      0.58921  284.34s
+     23       [94m0.00531[0m       [32m0.00866[0m      0.61314  284.14s
+     24       [94m0.00529[0m       [32m0.00851[0m      0.62101  284.45s
+     25       [94m0.00525[0m       0.00866      0.60588  284.40s
+     26       [94m0.00520[0m       [32m0.00841[0m      0.61823  284.19s
+     27       [94m0.00516[0m       0.00846      0.60950  284.74s
+     28       0.00518       [32m0.00810[0m      0.63990  285.35s
+     29       [94m0.00515[0m       0.00822      0.62638  284.15s
+     30       [94m0.00511[0m       0.00822      0.62208  284.04s
+     31       [94m0.00508[0m       [32m0.00788[0m      0.64521  284.16s
+     32       [94m0.00507[0m       0.00814      0.62242  284.71s
+     33       0.00507       0.00810      0.62534  285.11s
+     34       [94m0.00498[0m       [32m0.00757[0m      0.65730  284.81s
+     35       0.00502       0.00771      0.65051  284.53s
+     36       0.00501       0.00776      0.64486  284.31s
+     37       [94m0.00497[0m       [32m0.00753[0m      0.65997  283.96s
+     38       [94m0.00495[0m       0.00772      0.64185  284.72s
+     39       [94m0.00491[0m       [32m0.00747[0m      0.65718  285.22s
+     40       [94m0.00489[0m       [32m0.00729[0m      0.67080  284.13s
+     41       [94m0.00488[0m       [32m0.00719[0m      0.67898  284.84s
+     42       0.00489       0.00737      0.66331  284.24s
+     43       [94m0.00484[0m       [32m0.00717[0m      0.67512  284.08s
+     44       [94m0.00483[0m       [32m0.00709[0m      0.68141  285.42s
+     45       0.00484       0.00715      0.67725  284.81s
+     46       [94m0.00482[0m       0.00712      0.67705  284.39s
+     47       [94m0.00480[0m       [32m0.00707[0m      0.67938  284.29s
+     48       [94m0.00479[0m       [32m0.00704[0m      0.68021  284.98s
+     49       [94m0.00478[0m       [32m0.00679[0m      0.70394  285.14s
+     50       [94m0.00477[0m       0.00691      0.69035  285.12s
+     51       [94m0.00476[0m       [32m0.00678[0m      0.70162  285.57s
+     52       [94m0.00472[0m       [32m0.00673[0m      0.70101  284.48s
+     53       0.00472       0.00689      0.68588  285.18s
+     54       0.00472       0.00683      0.69139  285.35s
+     55       [94m0.00469[0m       0.00694      0.67597  285.04s
+     56       0.00470       0.00674      0.69686  285.55s
+     57       [94m0.00467[0m       [32m0.00659[0m      0.70781  284.89s
+     58       [94m0.00466[0m       0.00671      0.69485  285.22s
+     59       [94m0.00464[0m       0.00664      0.69779  284.50s
+     60       [94m0.00464[0m       [32m0.00645[0m      0.71915  284.61s
+     61       0.00466       [32m0.00636[0m      0.73315  285.35s
+     62       0.00465       0.00640      0.72658  284.89s
+     63       [94m0.00462[0m       0.00641      0.72137  284.86s
+     64       [94m0.00459[0m       [32m0.00630[0m      0.72878  284.95s
+     65       0.00461       [32m0.00629[0m      0.73193  285.54s
+     66       [94m0.00458[0m       [32m0.00614[0m      0.74579  285.16s
+     67       0.00458       0.00630      0.72722  285.39s
+     68       [94m0.00456[0m       0.00626      0.72861  285.89s
+     69       0.00460       0.00632      0.72765  285.18s
+     70       0.00458       [32m0.00608[0m      0.75378  285.49s
+     71       [94m0.00455[0m       0.00622      0.73226  284.60s
+     72       [94m0.00453[0m       [32m0.00605[0m      0.74881  284.64s
+     73       0.00456       0.00613      0.74469  285.09s
+     74       [94m0.00452[0m       [32m0.00601[0m      0.75296  285.49s
+     75       [94m0.00451[0m       [32m0.00594[0m      0.75806  284.76s
+     76       0.00453       0.00595      0.76024  285.56s
+     77       0.00451       [32m0.00589[0m      0.76632  286.02s
+     78       0.00452       [32m0.00578[0m      0.78259  284.71s
+     79       [94m0.00448[0m       0.00580      0.77294  285.43s
+     80       0.00450       0.00585      0.76915  285.89s
+     81       [94m0.00447[0m       [32m0.00577[0m      0.77510  285.18s
+     82       [94m0.00446[0m       [32m0.00571[0m      0.78117  284.96s
+     83       0.00448       [32m0.00567[0m      0.78955  284.78s
+     84       0.00448       0.00574      0.77983  284.71s
+     85       0.00449       [32m0.00567[0m      0.79234  284.11s
+     86       [94m0.00443[0m       [32m0.00562[0m      0.78845  284.64s
+     87       0.00445       0.00564      0.78858  284.75s
+     88     
