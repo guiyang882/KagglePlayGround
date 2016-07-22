@@ -1,10 +1,10 @@
 *.csv
 *~
 *.pkl
-data/*.pkl
-data/*.csv
+.idea/*
 DigitRecognizer/data/test/ 
 DigitRecognizer/data/train/
 DigitRecognizer/data/error/
 FacialDetection/data/
 FacialDetection/result/
+MobileUserDemographics/data/
