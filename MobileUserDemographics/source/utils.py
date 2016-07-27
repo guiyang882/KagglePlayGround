@@ -25,9 +25,6 @@ def deal_timestamp(str_timestamp):
     tmp = datetime.strptime(str_timestamp, "%Y-%m-%d %H:%M:%S")
     return tmp.hour + tmp.minute / 60.0
 
-def deal_geoinfo(pdGeoData):
-    pass
-
 def prepare_categoring_labels():
     print("Read app_labels and label_categories")
     labels = pd.read_csv("../data/label_categories.csv", dtype={'app_id':np.str})
@@ -70,5 +67,15 @@ def prepare_train_data():
     train.to_csv("../data/prepare_train.csv", header=True, index=False, encoding='utf-8')
     print train.head()
 
+def prepare_geoposition():
+    print("Read Geo Classify...")
+    geoClass = pd.read_csv("../data/geo_class_features.csv")
+    geoMap = {}
+    for ind in range(len(geoClass)):
+        longtitude = geoClass["longtitude"][ind]
+        latitude = geoClass["latitude"][ind]
+        class_index = geoClass["class"][ind]
+        geoMap[(longtitude, latitude)] = class_index
+
 if __name__ == "__main__":
-    prepare_train_data()
+    prepare_geoposition()
