@@ -4,9 +4,7 @@ import numpy as np
 from sklearn.cross_validation import train_test_split
 import xgboost as xgb
 import random
-import zipfile
 import time
-import shutil
 from sklearn.metrics import log_loss
 
 random.seed(2016)
@@ -94,45 +92,29 @@ def read_train_test():
             hour_data.append(tmp.hour)
         return weekday_data, hour_data
 
-    def rules_for_geo(geo_info):
-        geo_index = []
-        for i in geo_info.index:
-            t_key = (int(geo_info.loc[i]["longitude"]), int(geo_info.loc[i]["latitude"]))
-            info = 0;
-            if geoMap.has_key(t_key):
-                info = geoMap[t_key]
-            else:
-                info = 0
-            geo_index.append(info)
-        return geo_index
-
     # Events
     print('Read events...')
     events = pd.read_csv("../data/events.csv", dtype={'device_id': np.str})
     events['counts'] = events.groupby(['device_id'])['event_id'].transform('count')
-    events.drop_duplicates('device_id', keep='first', inplace=True)
+
+    # Read table prepare app
+    print("Deal with app event")
+    app_event_label = pd.read_csv("../data/table_prepare_app.csv", dtype={"event_id": np.int64})
+    events = pd.merge(events, app_event_label, how="left", on="event_id", left_index=True)
+    del events["event_id"]
+    events.sort_values(by=["device_id", "timestamp"], inplace=True)
+    events["timestamp"] = events["timestamp"].apply(lambda x: datetime.datetime.strptime(str(x), "%Y-%m-%d %H:%M:%S").time())
+
+    # 分开处理时间、地点和统计数据 和 其他属性
+
     print events.head()
+    return
 
     print("Deal with timestamp...")
     weekday_data, hour_data = rules_for_timestamp(events['timestamp'])
     del events["timestamp"]
     events["weekday"] = pd.Series(data=weekday_data, index=events.index)
     events["hour"] = pd.Series(data=hour_data, index=events.index)
-
-    print("Deal with geo info...")
-    pd_geoClass = pd.read_csv("../data/geo_class_features.csv")
-    geoMap = {}
-    for ind in range(len(pd_geoClass)):
-        longtitude = pd_geoClass["longtitude"][ind]
-        latitude = pd_geoClass["latitude"][ind]
-        class_index = pd_geoClass["class"][ind]
-        geoMap[(longtitude, latitude)] = class_index
-
-    tmp = events[["longitude", "latitude"]]
-    geo_class = rules_for_geo(tmp)
-    del events["longitude"]
-    del events["latitude"]
-    events["geo"] = pd.Series(data=geo_class, index=events.index)
 
     # Phone brand
     print('Read brands...')
@@ -141,47 +123,62 @@ def read_train_test():
     pbd = map_column(pbd, 'phone_brand')
     pbd = map_column(pbd, 'device_model')
 
-    # Read table prepare app
-    print("Deal with app event")
-    app_event_label = pd.read_csv("../data/table_prepare_app.csv", dtype={"event_id": np.int64})
-    print type(app_event_label["event_id"][0])
-    print type(events["event_id"][0])
-    events = pd.merge(events, app_event_label, how="left", on="event_id", left_index=True)
-
     # Train
     print('Read train...')
     train = pd.read_csv("../data/gender_age_train.csv", dtype={'device_id': np.str})
     train = map_column(train, 'group')
-    train = train.drop(['age'], axis=1)
-    train = train.drop(['gender'], axis=1)
+    print("deal age and gender")
+    train["age"] = train["age"].apply(lambda x: int(x)/5)
+    train["gender"] = train["gender"].apply(lambda x: 0 if x == "M" else 1)
+    print("start merge")
     train = pd.merge(train, pbd, how='left', on='device_id', left_index=True)
     train = pd.merge(train, events, how='left', on='device_id', left_index=True)
-    train.fillna(-1, inplace=True)
+
+    group_columns = ["Custom", "Education", "Family",
+                     "Finance", "Fun", "Industry tag",
+                     "Music", "Other", "Productivity",
+                     "Property", "Religion", "Services",
+                     "Video", "Games", "Shopping", "Tencent", "Travel", "Vitality", "Sports"]
+
+
+    train_dropNA = train.dropna(subset=group_columns)
+    train_dropNA.fillna(-1, inplace=True)
+    train_WithNA = train.loc[train.index.difference(train_dropNA.index)]
+    train_WithNA.fillna(-1, inplace=True)
 
     # Test
     print('Read test...')
     test = pd.read_csv("../data/gender_age_test.csv", dtype={'device_id': np.str})
     test = pd.merge(test, pbd, how='left', on='device_id', left_index=True)
     test = pd.merge(test, events, how='left', on='device_id', left_index=True)
-    test.fillna(-1, inplace=True)
+    test_dropNA = test.dropna(subset=group_columns)
+    test_dropNA.fillna(-1, inplace=True)
+    test_WithNA = test.loc[test_dropNA.index.difference(test_dropNA.index)]
+    test_WithNA.fillna(-1, inplace=True)
 
-    train.to_csv("train_sample.csv", index=False)
-    test.to_csv("test_sample.csv", index=False)
+    train_dropNA.to_csv("train_sample_DropNA.csv", index=False)
+    test_dropNA.to_csv("test_sample_DropNA.csv", index=False)
+    train_WithNA.to_csv("train_sample_WithNA.csv", index=False)
+    test_WithNA.to_csv("test_sample_WithNA.csv", index=False)
 
-def prepare_Sample():
-    train = pd.read_csv("./train_sample.csv", dtype={"device_id": np.str})
-    test = pd.read_csv("./test_sample.csv", dtype={"device_id": np.str})
-
+def prepare_Sample_DropNA():
+    train = pd.read_csv("../data/sample-01/train_sample_DropNA.csv", dtype={"device_id": np.str})
+    test = pd.read_csv("../data/sample-01/test_sample_DropNA.csv", dtype={"device_id": np.str})
+    del train["gender"]
+    del train["age"]
+    del train["event_id"]
     # Features
     features = list(test.columns.values)
     features.remove('device_id')
 
     return train, test, features
 
-train, test, features = prepare_Sample()
-print('Length of train: ', len(train))
-print('Length of test: ', len(test))
-print('Features [{}]: {}'.format(len(features), sorted(features)))
-test_prediction, score = run_xgb(train, test, features, 'group')
-print("LS: {}".format(round(score, 5)))
-create_submission(score, test, test_prediction)
+read_train_test()
+
+# train, test, features = prepare_Sample_DropNA()
+# print('Length of train: ', len(train))
+# print('Length of test: ', len(test))
+# print('Features [{}]: {}'.format(len(features), sorted(features)))
+# test_prediction, score = run_xgb(train, test, features, 'group')
+# print("LS: {}".format(round(score, 5)))
+# create_submission(score, test, test_prediction)
