@@ -7,30 +7,44 @@ import random
 import time
 from sklearn.metrics import log_loss
 
-random.seed(2016)
+random.seed(114)
 
 def run_xgb(train, test, features, target, random_state=0):
-    eta = 0.1
+    eta = 0.2
     max_depth = 5
     subsample = 0.7
     colsample_bytree = 0.7
     start_time = time.time()
 
-    print('XGBoost params. ETA: {}, MAX_DEPTH: {}, SUBSAMPLE: {}, COLSAMPLE_BY_TREE: {}'.format(eta, max_depth, subsample, colsample_bytree))
+    # print('XGBoost params. ETA: {}, MAX_DEPTH: {}, SUBSAMPLE: {}, COLSAMPLE_BY_TREE: {}'.format(eta, max_depth, subsample, colsample_bytree))
+    # params = {
+    #     "objective": "multi:softprob",
+    #     "num_class": 12,
+    #     "booster" : "gbtree",
+    #     "eval_metric": "mlogloss",
+    #     "eta": eta,
+    #     "max_depth": max_depth,
+    #     "subsample": subsample,
+    #     "colsample_bytree": colsample_bytree,
+    #     "silent": 1,
+    #     "seed": random_state,
+    # }
+
     params = {
         "objective": "multi:softprob",
         "num_class": 12,
-        "booster" : "gbtree",
+        "eta": 0.01,
+        "lambda": 5,
+        "lambda_bias": 0,
+        "alpha": 2,
+        "booster": "gblinear",
         "eval_metric": "mlogloss",
-        "eta": eta,
-        "max_depth": max_depth,
-        "subsample": subsample,
-        "colsample_bytree": colsample_bytree,
         "silent": 1,
         "seed": random_state,
     }
-    num_boost_round = 500
-    early_stopping_rounds = 50
+
+    num_boost_round = 280
+    early_stopping_rounds = 100
     test_size = 0.3
 
     X_train, X_valid = train_test_split(train, test_size=test_size, random_state=random_state)
@@ -45,11 +59,13 @@ def run_xgb(train, test, features, target, random_state=0):
     gbm = xgb.train(params, dtrain, num_boost_round, evals=watchlist, early_stopping_rounds=early_stopping_rounds, verbose_eval=True)
 
     print("Validating...")
-    check = gbm.predict(xgb.DMatrix(X_valid[features]), ntree_limit=gbm.best_iteration)
+    # check = gbm.predict(xgb.DMatrix(X_valid[features]), ntree_limit=gbm.best_iteration)
+    check = gbm.predict(xgb.DMatrix(X_valid[features]))
     score = log_loss(y_valid.tolist(), check)
 
     print("Predict test set...")
-    test_prediction = gbm.predict(xgb.DMatrix(test[features]), ntree_limit=gbm.best_iteration)
+    # test_prediction = gbm.predict(xgb.DMatrix(test[features]), ntree_limit=gbm.best_iteration)
+    test_prediction = gbm.predict(xgb.DMatrix(test[features]))
 
     print('Training time: {} minutes'.format(round((time.time() - start_time)/60, 2)))
     return test_prediction.tolist(), score
@@ -103,18 +119,23 @@ def read_train_test():
     events = pd.merge(events, app_event_label, how="left", on="event_id", left_index=True)
     del events["event_id"]
     events.sort_values(by=["device_id", "timestamp"], inplace=True)
-    events["timestamp"] = events["timestamp"].apply(lambda x: datetime.datetime.strptime(str(x), "%Y-%m-%d %H:%M:%S").time())
-
-    # 分开处理时间、地点和统计数据 和 其他属性
-
+    events["timestamp"] = events["timestamp"].apply(lambda x: datetime.datetime.strptime(str(x), "%Y-%m-%d %H:%M:%S").time().hour * 1.0 + datetime.datetime.strptime(str(x), "%Y-%m-%d %H:%M:%S").time().minute / 60.0)
+    del events["longitude"]
+    del events["latitude"]
+    events_counts = events[["device_id", "counts"]].drop_duplicates(subset={"device_id"})
+    events_counts.set_index(["device_id"], inplace=True)
+    del events["counts"]
+    events = events.groupby(["device_id"]).sum()
+    events["counts"] = pd.Series(data=events_counts["counts"].values, index=events_counts.index)
+    events.index.set_names("id", inplace=True)
+    events["device_id"] = pd.Series(data=events.index.tolist(), index=events.index)
     print events.head()
-    return
 
-    print("Deal with timestamp...")
-    weekday_data, hour_data = rules_for_timestamp(events['timestamp'])
-    del events["timestamp"]
-    events["weekday"] = pd.Series(data=weekday_data, index=events.index)
-    events["hour"] = pd.Series(data=hour_data, index=events.index)
+    # print("Deal with timestamp...")
+    # weekday_data, hour_data = rules_for_timestamp(events['timestamp'])
+    # del events["timestamp"]
+    # events["weekday"] = pd.Series(data=weekday_data, index=events.index)
+    # events["hour"] = pd.Series(data=hour_data, index=events.index)
 
     # Phone brand
     print('Read brands...')
@@ -128,8 +149,10 @@ def read_train_test():
     train = pd.read_csv("../data/gender_age_train.csv", dtype={'device_id': np.str})
     train = map_column(train, 'group')
     print("deal age and gender")
-    train["age"] = train["age"].apply(lambda x: int(x)/5)
-    train["gender"] = train["gender"].apply(lambda x: 0 if x == "M" else 1)
+    # train["age"] = train["age"].apply(lambda x: int(x)/5)
+    # train["gender"] = train["gender"].apply(lambda x: 0 if x == "M" else 1)
+    del train["age"]
+    del train["gender"]
     print("start merge")
     train = pd.merge(train, pbd, how='left', on='device_id', left_index=True)
     train = pd.merge(train, events, how='left', on='device_id', left_index=True)
@@ -140,45 +163,42 @@ def read_train_test():
                      "Property", "Religion", "Services",
                      "Video", "Games", "Shopping", "Tencent", "Travel", "Vitality", "Sports"]
 
-
-    train_dropNA = train.dropna(subset=group_columns)
-    train_dropNA.fillna(-1, inplace=True)
-    train_WithNA = train.loc[train.index.difference(train_dropNA.index)]
-    train_WithNA.fillna(-1, inplace=True)
+    train.fillna(-1, inplace=True)
 
     # Test
     print('Read test...')
     test = pd.read_csv("../data/gender_age_test.csv", dtype={'device_id': np.str})
     test = pd.merge(test, pbd, how='left', on='device_id', left_index=True)
     test = pd.merge(test, events, how='left', on='device_id', left_index=True)
-    test_dropNA = test.dropna(subset=group_columns)
-    test_dropNA.fillna(-1, inplace=True)
-    test_WithNA = test.loc[test_dropNA.index.difference(test_dropNA.index)]
-    test_WithNA.fillna(-1, inplace=True)
+    test.fillna(-1, inplace=True)
 
-    train_dropNA.to_csv("train_sample_DropNA.csv", index=False)
-    test_dropNA.to_csv("test_sample_DropNA.csv", index=False)
-    train_WithNA.to_csv("train_sample_WithNA.csv", index=False)
-    test_WithNA.to_csv("test_sample_WithNA.csv", index=False)
+    train.to_csv("train_sample.csv", index=False)
+    test.to_csv("test_sample.csv", index=False)
 
 def prepare_Sample_DropNA():
-    train = pd.read_csv("../data/sample-01/train_sample_DropNA.csv", dtype={"device_id": np.str})
-    test = pd.read_csv("../data/sample-01/test_sample_DropNA.csv", dtype={"device_id": np.str})
-    del train["gender"]
-    del train["age"]
-    del train["event_id"]
+    train = pd.read_csv("train_sample.csv", dtype={"device_id": np.str})
+    test = pd.read_csv("test_sample.csv", dtype={"device_id": np.str})
+    # print train.head()
     # Features
+    group_columns = ["Custom", "Education", "Family",
+                     "Finance", "Fun", "Industry tag",
+                     "Music", "Other", "Productivity",
+                     "Property", "Religion", "Services",
+                     "Video", "Games", "Shopping", "Tencent", "Travel", "Vitality", "Sports"]
+    remove_columns = ["Other", "Vitality", "Sports", "Travel"]
     features = list(test.columns.values)
     features.remove('device_id')
-
+    # for item in group_columns:
+    #     features.remove(item)
+    print features
     return train, test, features
 
-read_train_test()
+# read_train_test()
 
-# train, test, features = prepare_Sample_DropNA()
-# print('Length of train: ', len(train))
-# print('Length of test: ', len(test))
-# print('Features [{}]: {}'.format(len(features), sorted(features)))
-# test_prediction, score = run_xgb(train, test, features, 'group')
-# print("LS: {}".format(round(score, 5)))
-# create_submission(score, test, test_prediction)
+train, test, features = prepare_Sample_DropNA()
+print('Length of train: ', len(train))
+print('Length of test: ', len(test))
+print('Features [{}]: {}'.format(len(features), sorted(features)))
+test_prediction, score = run_xgb(train, test, features, 'group')
+print("LS: {}".format(round(score, 5)))
+create_submission(score, test, test_prediction)
